@@ -1,0 +1,6 @@
+{
+  "name": "아침 감정 체크인 (우리 반 마음 날씨)",
+  "description": "교실에서 아침마다 학생들의 마음 상태를 날씨 이모티콘으로 기록하고 구글 스프레드시트와 연동하는 교실 감정 체크인 웹앱",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
