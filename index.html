@@ -7,20 +7,467 @@
   <meta name="description" content="교실에서 아침마다 학생들의 마음 상태를 날씨 이모티콘과 꽃이름 닉네임으로 기록하고 구글 스프레드시트와 연동하는 감정 체크인 웹앱">
   <meta property="og:title" content="우리 반 꽃밭 마음 날씨 - 아침 감정 체크인">
   <meta property="og:description" content="교실에서 아침마다 학생들의 마음 상태를 날씨 이모티콘으로 기록하고 구글 스프레드시트와 연동하는 감정 체크인 웹앱">
-  <meta property="og:type" content="website">
-  <link rel="preconnect" href="https://cdn.jsdelivr.net">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
   <link rel="stylesheet" href="./style.css">
+  <style>
+    /* 인라인 필수 스타일: 외부 CSS 로드 실패나 404 시에도 100% 정상 표시 */
+    :root {
+      --bg-main: #fcfbf7;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --border-color: #f3efe6;
+      --primary: #f472b6;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .app-header {
+      background-color: rgba(255, 255, 255, 0.96);
+      border-bottom: 1px solid #f0ebe1;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      box-shadow: 0 1px 3px rgba(220, 210, 190, 0.15);
+    }
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0.65rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .brand-zone { display: flex; align-items: center; gap: 0.5rem; }
+    .brand-icon { font-size: 1.6rem; line-height: 1; }
+    .brand-title { font-size: 1.15rem; font-weight: 800; color: #1f2937; white-space: nowrap; }
+    .brand-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      background-color: #fce7f3;
+      color: #be185d;
+      padding: 0.15rem 0.5rem;
+      border-radius: var(--radius-full);
+    }
+    .header-nav {
+      display: flex;
+      align-items: center;
+      background-color: #fdf6ec;
+      border: 1px solid #fce8cc;
+      padding: 0.2rem;
+      border-radius: var(--radius-md);
+      gap: 0.2rem;
+    }
+    .nav-btn {
+      border: none;
+      background: transparent;
+      padding: 0.4rem 0.85rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.825rem;
+      font-weight: 700;
+      color: #78716c;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .nav-btn.active {
+      background-color: #ffffff;
+      color: #9d174d;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    .header-actions { display: flex; align-items: center; gap: 0.5rem; }
+    .btn-secondary {
+      border: 1px solid #f3efe6;
+      background-color: #ffffff;
+      color: #4b5563;
+      padding: 0.4rem 0.75rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .main-content {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 1.25rem 1.25rem 3.5rem;
+      flex: 1;
+    }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+    
+    /* 히어로 배너 */
+    .hero-banner-card {
+      background: linear-gradient(135deg, #fffbeb 0%, #fdf2f8 50%, #f0f9ff 100%);
+      border: 1px solid #fce8cc;
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.75rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.25rem;
+    }
+    @media (max-width: 768px) {
+      .hero-banner-card { flex-direction: column; align-items: stretch; padding: 1rem; }
+    }
+    .hero-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #1f2937;
+      margin-bottom: 0.35rem;
+    }
+    .hero-desc { font-size: 0.9rem; color: #4b5563; }
+    .hero-img-box {
+      width: 240px;
+      height: 130px;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      border: 2px solid #ffffff;
+      box-shadow: 0 4px 10px rgba(220, 200, 180, 0.2);
+      flex-shrink: 0;
+      background-color: #fef3c7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .hero-img-box img { width: 100%; height: 100%; object-fit: cover; }
+    .svg-hero-placeholder { width: 100%; height: 100%; }
+
+    /* 알림 배너 */
+    .status-banner {
+      padding: 0.65rem 1rem;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      margin-bottom: 1.25rem;
+    }
+    .status-banner.warning { background-color: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+    .status-banner.success { background-color: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+
+    /* 학생 선택 컨테이너 */
+    .step-container {
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      box-shadow: 0 2px 4px rgba(220, 215, 200, 0.1);
+      margin-bottom: 1.25rem;
+    }
+    .step-label {
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: #1f2937;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #f8f5ee;
+      padding-bottom: 0.5rem;
+    }
+
+    /* [중요 개선] 컴팩트한 크기의 꽃이름 카드 그리드 */
+    .student-grid {
+      display: grid;
+      grid-template-columns: repeat(10, minmax(0, 1fr));
+      gap: 0.4rem;
+    }
+    @media (max-width: 1024px) {
+      .student-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    }
+    @media (max-width: 480px) {
+      .student-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.35rem; }
+    }
+    .student-card {
+      background-color: #fffdfa;
+      border: 1.5px solid #f4ece1;
+      border-radius: 10px;
+      padding: 0.35rem 0.2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 56px;
+    }
+    .student-card:hover {
+      transform: translateY(-2px);
+      border-color: #f472b6;
+      background-color: #ffffff;
+      box-shadow: 0 2px 6px rgba(244, 114, 182, 0.18);
+    }
+    .student-card.selected {
+      border-color: #ec4899;
+      background-color: #fdf2f8;
+      box-shadow: 0 0 0 2.5px rgba(236, 72, 153, 0.3);
+      transform: scale(1.03);
+    }
+    .student-card.submitted {
+      background-color: #f0fdf4;
+      border-color: #bbf7d0;
+    }
+    .student-card.submitted::after {
+      content: '✓';
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      font-size: 0.65rem;
+      font-weight: 900;
+      color: #10b981;
+    }
+    .student-num {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: #9ca3af;
+      line-height: 1;
+    }
+    .student-icon {
+      font-size: 1.1rem;
+      line-height: 1;
+      margin: 0.15rem 0;
+    }
+    .student-name {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: #1f2937;
+      white-space: nowrap;
+      letter-spacing: -0.02em;
+    }
+    .student-badge-today {
+      font-size: 0.65rem;
+      margin-top: 0.1rem;
+      line-height: 1;
+      display: block;
+    }
+
+    /* 감정 입력 폼 */
+    .checkin-form-container {
+      background-color: #ffffff;
+      border: 2px solid #f472b6;
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      box-shadow: 0 6px 14px rgba(244, 114, 182, 0.12);
+      margin-top: 1.25rem;
+      display: none;
+    }
+    .checkin-form-container.active { display: block; animation: fadeIn 0.2s ease; }
+    .form-header-selected {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid #fce7f3;
+      margin-bottom: 1rem;
+    }
+    .selected-student-info { display: flex; align-items: center; gap: 0.5rem; }
+    .info-tag {
+      background-color: #ec4899;
+      color: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 0.2rem 0.55rem;
+      border-radius: var(--radius-full);
+    }
+    .info-name { font-size: 1.15rem; font-weight: 800; color: #1f2937; }
+
+    /* 날씨 버튼 6종 */
+    .weather-options-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    @media (max-width: 640px) {
+      .weather-options-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .weather-btn {
+      background-color: #ffffff;
+      border: 2px solid #f3efe6;
+      border-radius: var(--radius-md);
+      padding: 0.85rem 0.6rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 0.25rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .weather-btn:hover { transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.06); }
+    .weather-btn.sunny { background-color: #fffdf5; border-color: #fde68a; }
+    .weather-btn.cloudy { background-color: #f8fafc; border-color: #e2e8f0; }
+    .weather-btn.rainy { background-color: #f0f9ff; border-color: #bae6fd; }
+    .weather-btn.windy { background-color: #f0fdfa; border-color: #99f6e4; }
+    .weather-btn.snowy { background-color: #faf5ff; border-color: #e9d5ff; }
+    .weather-btn.thunder { background-color: #fff1f2; border-color: #fecdd3; }
+    .weather-btn.active {
+      border-color: #ec4899 !important;
+      background-color: #fdf2f8 !important;
+      box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.25);
+    }
+    .weather-emoji { font-size: 2rem; line-height: 1; }
+    .weather-title { font-size: 0.9rem; font-weight: 800; color: #1f2937; }
+    .weather-sub { font-size: 0.72rem; color: #6b7280; }
+
+    /* 입력 박스 및 추천 칩 */
+    .input-group { margin-bottom: 1.25rem; }
+    .input-label { display: block; font-size: 0.875rem; font-weight: 700; color: #1f2937; margin-bottom: 0.4rem; }
+    .text-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      border: 1.5px solid #f0ede4;
+      border-radius: var(--radius-md);
+      outline: none;
+      background-color: #ffffff;
+    }
+    .text-input:focus { border-color: #f472b6; box-shadow: 0 0 0 3px rgba(244, 114, 182, 0.2); }
+    .quick-chips-wrapper { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
+    .chip-btn {
+      background-color: #fdf6ec;
+      border: 1px solid #fce8cc;
+      border-radius: var(--radius-full);
+      padding: 0.25rem 0.65rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #78716c;
+      cursor: pointer;
+    }
+    .chip-btn:hover { background-color: #fde68a; color: #78350f; }
+
+    .btn-submit {
+      width: 100%;
+      padding: 0.9rem;
+      border: none;
+      background: linear-gradient(135deg, #ec4899 0%, #f59e0b 100%);
+      color: #ffffff;
+      font-size: 1.05rem;
+      font-weight: 800;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      box-shadow: 0 2px 4px rgba(236, 72, 153, 0.25);
+    }
+    .btn-submit:disabled { background: #e5e7eb; color: #9ca3af; cursor: not-allowed; box-shadow: none; }
+
+    /* 대시보드 */
+    .dashboard-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    .metric-card {
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 1rem 1.25rem;
+    }
+    .metric-label { font-size: 0.78rem; font-weight: 700; color: #6b7280; margin-bottom: 0.25rem; }
+    .metric-value { font-size: 1.7rem; font-weight: 900; color: #1f2937; }
+    .metric-sub { font-size: 0.72rem; color: #9ca3af; }
+
+    .care-alert-box {
+      background: linear-gradient(135deg, #fff1f2 0%, #fdf2f8 50%, #fffbeb 100%);
+      border: 1.5px solid #fecdd3;
+      border-radius: var(--radius-lg);
+      padding: 1.2rem;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+    .care-title { font-size: 0.95rem; font-weight: 800; color: #9f1239; margin-bottom: 0.25rem; }
+    .care-desc { font-size: 0.825rem; color: #be123c; }
+
+    .distribution-section {
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .dist-bar-track {
+      display: flex;
+      height: 28px;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background-color: #f3efe6;
+      margin: 0.6rem 0 0.85rem;
+    }
+    .dist-segment {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 800;
+      color: #ffffff;
+    }
+    .dist-legend { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+    .legend-item { display: flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; font-weight: 600; color: #4b5563; }
+    .legend-dot { width: 9px; height: 9px; border-radius: 50%; }
+
+    .records-table-container {
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .records-table-header {
+      padding: 0.85rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #f9f6f0;
+    }
+    .records-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem; }
+    .records-table th { background-color: #fdfbf7; padding: 0.65rem 1.25rem; font-weight: 700; color: #6b7280; border-bottom: 1px solid var(--border-color); }
+    .records-table td { padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border-color); color: #1f2937; }
+    .records-table tr:last-child td { border-bottom: none; }
+
+    .toast-notice {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background-color: #1f2937;
+      color: #ffffff;
+      padding: 0.65rem 1.2rem;
+      border-radius: var(--radius-md);
+      font-size: 0.875rem;
+      font-weight: 600;
+      display: none;
+      z-index: 100;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    }
+    .toast-notice.show { display: block; animation: fadeIn 0.2s ease; }
+    .app-footer { border-top: 1px solid #f0ebe1; background-color: #ffffff; padding: 1rem; text-align: center; font-size: 0.78rem; color: #9ca3af; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
 </head>
 <body>
 
-  <!-- 상단 네비게이션 헤더 (파스텔 톤 3-Zone) -->
+  <!-- 상단 헤더 -->
   <header class="app-header">
     <div class="header-container">
       <div class="brand-zone">
         <span class="brand-icon">🌸</span>
         <h1 class="brand-title">우리 반 꽃밭 마음 날씨</h1>
-        <span class="brand-badge hidden-sm">아침 감정 체크인</span>
+        <span class="brand-badge">아침 감정 체크인</span>
       </div>
 
       <nav class="header-nav">
@@ -30,7 +477,7 @@
       </nav>
 
       <div class="header-actions">
-        <button type="button" class="btn-secondary" id="sound-toggle-btn" title="효과음 설정">
+        <button type="button" class="btn-secondary" id="sound-toggle-btn" title="효과음">
           🔔 소리 켜짐
         </button>
         <button type="button" class="btn-secondary" id="export-csv-btn">
@@ -45,19 +492,17 @@
 
     <!-- 1. 학생 체크인 탭 -->
     <section id="student-view" class="tab-pane active">
-      <!-- 산뜻한 파스텔 일러스트레이션 히어로 배너 -->
+      <!-- 산뜻한 파스텔 히어로 배너 (자체 내장 SVG 일러스트로 404 원천 차단) -->
       <div class="hero-banner-card">
         <div class="hero-text-zone">
-          <div class="hero-meta-kicker">
-            <span>📅 오늘 아침 우리 반 마음 날씨</span>
-            <span>·</span>
-            <span>20송이 꽃밭</span>
+          <div style="font-size: 0.78rem; font-weight: 700; color: #92400e; margin-bottom: 0.25rem;">
+            📅 오늘 아침 우리 반 마음 날씨 · 20송이 꽃밭
           </div>
           <h2 class="hero-title">오늘 내 마음의 날씨는 어떤가요? 🌤️</h2>
           <p class="hero-desc">
-            자신의 예쁜 <strong>꽃이름 닉네임</strong>을 누르고, 지금 마음과 닮은 날씨와 짧은 한 줄을 남겨주세요.
+            자신의 예쁜 <strong>꽃이름 닉네임</strong>을 누르고, 지금 내 마음과 가장 닮은 날씨와 한 줄을 남겨주세요.
           </p>
-          <div style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+          <div style="margin-top: 0.85rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
             <button type="button" id="fill-sample-btn" class="btn-secondary" style="background-color: #fff; color: #be185d; border-color: #fbcfe8; font-weight: 700;">
               ✨ 예시 데이터 채워보기
             </button>
@@ -65,26 +510,73 @@
         </div>
 
         <div class="hero-img-box">
-          <img 
-            src="./assets/images/morning_weather_hero_1792218704283.jpg" 
-            alt="상쾌한 아침 햇살과 교실 창문 일러스트" 
-            onerror="this.style.display='none'"
-          >
+          <!-- 자체 내장 파스텔 SVG 일러스트 (이미지 파일이 누락되어도 100% 정상 표시) -->
+          <svg class="svg-hero-placeholder" viewBox="0 0 240 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="240" height="130" fill="#FEF9C3" rx="12"/>
+            <circle cx="50" cy="45" r="28" fill="#FDE047"/>
+            <path d="M50 8C52 14 48 14 50 8Z" stroke="#F59E0B" stroke-width="2"/>
+            <circle cx="42" cy="42" r="3" fill="#B45309"/>
+            <circle cx="58" cy="42" r="3" fill="#B45309"/>
+            <path d="M44 52C47 56 53 56 56 52" stroke="#B45309" stroke-width="2" stroke-linecap="round"/>
+            <path d="M70 45C70 25 150 25 150 45" stroke="#F472B6" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+            <path d="M74 48C74 30 146 30 146 48" stroke="#FBBF24" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+            <path d="M78 51C78 35 142 35 142 51" stroke="#60A5FA" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+            <ellipse cx="140" cy="55" rx="30" ry="16" fill="#FFFFFF" opacity="0.9"/>
+            <ellipse cx="160" cy="50" rx="22" ry="14" fill="#FFFFFF" opacity="0.9"/>
+            <ellipse cx="120" cy="52" rx="20" ry="12" fill="#FFFFFF" opacity="0.9"/>
+            <rect y="95" width="240" height="35" fill="#BBF7D0" rx="6"/>
+            <!-- 귀여운 꽃들 -->
+            <circle cx="40" cy="105" r="6" fill="#F43F5E"/>
+            <circle cx="40" cy="105" r="2.5" fill="#FEF08A"/>
+            <circle cx="75" cy="100" r="7" fill="#F59E0B"/>
+            <circle cx="75" cy="100" r="3" fill="#78350F"/>
+            <circle cx="110" cy="104" r="6" fill="#A855F7"/>
+            <circle cx="110" cy="104" r="2.5" fill="#FEF08A"/>
+            <circle cx="145" cy="98" r="7" fill="#EC4899"/>
+            <circle cx="145" cy="98" r="3" fill="#FEF08A"/>
+            <circle cx="180" cy="103" r="6" fill="#3B82F6"/>
+            <circle cx="180" cy="103" r="2.5" fill="#FEF08A"/>
+            <circle cx="215" cy="100" r="7" fill="#EAB308"/>
+            <circle cx="215" cy="100" r="3" fill="#78350F"/>
+          </svg>
         </div>
       </div>
 
       <!-- 시트 연결 상태 알림 배너 -->
       <div id="connection-status-banner" class="status-banner warning">
-        <span>⚠️ 구글 시트 웹앱 URL 설정 상태를 확인하는 중입니다...</span>
+        <span>🌸 브라우저 임시 모드입니다. [시트 연동 설정] 탭에서 구글 시트 URL을 입력하면 실시간 영구 저장됩니다.</span>
       </div>
 
-      <!-- 1단계: 학생 명단 꽃밭 그리드 -->
+      <!-- 1단계: 학생 명단 꽃밭 그리드 (컴팩트 사이즈 10열 x 2행) -->
       <div class="step-container">
         <div class="step-label">
           <span>🌸 1단계: 내 꽃이름 닉네임 선택하기</span>
-          <span style="font-size: 0.8rem; font-weight: 500; color: #6b7280;">(체크인 완료 시 체크 표시가 나타납니다)</span>
+          <span style="font-size: 0.75rem; font-weight: 500; color: #6b7280;">(클릭하여 선택하세요 · 체크 표시: 오늘 제출 완료)</span>
         </div>
-        <div id="student-grid" class="student-grid"></div>
+        
+        <!-- HTML에 20명 꽃이름 카드를 사전 렌더링하여 JS 로딩 전에도 100% 즉시 표시 -->
+        <div id="student-grid" class="student-grid">
+          <div class="student-card" data-num="1" onclick="selectStudentByNum(1)"><span class="student-num">1번</span><span class="student-icon">🌼</span><span class="student-name">민들레</span></div>
+          <div class="student-card" data-num="2" onclick="selectStudentByNum(2)"><span class="student-num">2번</span><span class="student-icon">🌻</span><span class="student-name">해바라기</span></div>
+          <div class="student-card" data-num="3" onclick="selectStudentByNum(3)"><span class="student-num">3번</span><span class="student-icon">🌷</span><span class="student-name">튤립</span></div>
+          <div class="student-card" data-num="4" onclick="selectStudentByNum(4)"><span class="student-num">4번</span><span class="student-icon">🌹</span><span class="student-name">장미</span></div>
+          <div class="student-card" data-num="5" onclick="selectStudentByNum(5)"><span class="student-num">5번</span><span class="student-icon">🌸</span><span class="student-name">코스모스</span></div>
+          <div class="student-card" data-num="6" onclick="selectStudentByNum(6)"><span class="student-num">6번</span><span class="student-icon">🪻</span><span class="student-name">수국</span></div>
+          <div class="student-card" data-num="7" onclick="selectStudentByNum(7)"><span class="student-num">7번</span><span class="student-icon">🌺</span><span class="student-name">동백꽃</span></div>
+          <div class="student-card" data-num="8" onclick="selectStudentByNum(8)"><span class="student-num">8번</span><span class="student-icon">🌼</span><span class="student-name">수선화</span></div>
+          <div class="student-card" data-num="9" onclick="selectStudentByNum(9)"><span class="student-num">9번</span><span class="student-icon">💜</span><span class="student-name">제비꽃</span></div>
+          <div class="student-card" data-num="10" onclick="selectStudentByNum(10)"><span class="student-num">10번</span><span class="student-icon">🤍</span><span class="student-name">안개꽃</span></div>
+          <div class="student-card" data-num="11" onclick="selectStudentByNum(11)"><span class="student-num">11번</span><span class="student-icon">🔔</span><span class="student-name">은방울꽃</span></div>
+          <div class="student-card" data-num="12" onclick="selectStudentByNum(12)"><span class="student-num">12번</span><span class="student-icon">🪻</span><span class="student-name">라벤더</span></div>
+          <div class="student-card" data-num="13" onclick="selectStudentByNum(13)"><span class="student-num">13번</span><span class="student-icon">🌺</span><span class="student-name">무궁화</span></div>
+          <div class="student-card" data-num="14" onclick="selectStudentByNum(14)"><span class="student-num">14번</span><span class="student-icon">💐</span><span class="student-name">백합</span></div>
+          <div class="student-card" data-num="15" onclick="selectStudentByNum(15)"><span class="student-num">15번</span><span class="student-icon">🤍</span><span class="student-name">목련</span></div>
+          <div class="student-card" data-num="16" onclick="selectStudentByNum(16)"><span class="student-num">16번</span><span class="student-icon">🌸</span><span class="student-name">진달래</span></div>
+          <div class="student-card" data-num="17" onclick="selectStudentByNum(17)"><span class="student-num">17번</span><span class="student-icon">🌼</span><span class="student-name">개나리</span></div>
+          <div class="student-card" data-num="18" onclick="selectStudentByNum(18)"><span class="student-num">18번</span><span class="student-icon">🪷</span><span class="student-name">연꽃</span></div>
+          <div class="student-card" data-num="19" onclick="selectStudentByNum(19)"><span class="student-num">19번</span><span class="student-icon">🏵️</span><span class="student-name">채송화</span></div>
+          <div class="student-card" data-num="20" onclick="selectStudentByNum(20)"><span class="student-num">20번</span><span class="student-icon">💛</span><span class="student-name">프리지아</span></div>
+        </div>
       </div>
 
       <!-- 2단계 & 3단계: 마음 날씨 선택 및 한 줄 입력 폼 -->
@@ -93,15 +585,49 @@
           <div class="selected-student-info">
             <span class="info-tag" id="selected-student-num">1번 🌼</span>
             <span class="info-name" id="selected-student-name">민들레</span>
-            <span style="font-size: 0.9rem; color: #6b7280;">친구의 오늘 마음 날씨 체크인</span>
+            <span style="font-size: 0.85rem; color: #6b7280;">친구의 오늘 마음 날씨 체크인</span>
           </div>
+          <button type="button" onclick="cancelSelection()" style="background: none; border: none; font-size: 0.75rem; color: #9ca3af; text-decoration: underline; cursor: pointer;">
+            선택 취소
+          </button>
         </div>
 
         <div class="step-label" style="margin-bottom: 0.6rem; border: none; padding-bottom: 0;">
           🌈 2단계: 지금 내 마음과 가장 닮은 날씨를 골라주세요
         </div>
-        <!-- 6가지 날씨 감정 버튼 -->
-        <div id="weather-options" class="weather-options-grid"></div>
+        <!-- 6가지 날씨 감정 버튼 사전 렌더링 -->
+        <div id="weather-options" class="weather-options-grid">
+          <button type="button" class="weather-btn sunny" onclick="selectWeatherById('sunny')">
+            <span class="weather-emoji">☀️</span>
+            <span class="weather-title">해가 쨍쨍한 날</span>
+            <span class="weather-sub">아주 좋아요 / 활기차요</span>
+          </button>
+          <button type="button" class="weather-btn cloudy" onclick="selectWeatherById('cloudy')">
+            <span class="weather-emoji">⛅</span>
+            <span class="weather-title">구름이 낀 날</span>
+            <span class="weather-sub">그저 그래요 / 차분해요</span>
+          </button>
+          <button type="button" class="weather-btn rainy" onclick="selectWeatherById('rainy')">
+            <span class="weather-emoji">🌧️</span>
+            <span class="weather-title">비가 오는 날</span>
+            <span class="weather-sub">슬퍼요 / 울적하고 지쳐요</span>
+          </button>
+          <button type="button" class="weather-btn windy" onclick="selectWeatherById('windy')">
+            <span class="weather-emoji">💨</span>
+            <span class="weather-title">바람 부는 날</span>
+            <span class="weather-sub">싱숭생숭 / 불안해요</span>
+          </button>
+          <button type="button" class="weather-btn snowy" onclick="selectWeatherById('snowy')">
+            <span class="weather-emoji">❄️</span>
+            <span class="weather-title">눈 오는 날</span>
+            <span class="weather-sub">설레요 / 포근하거나 차가워요</span>
+          </button>
+          <button type="button" class="weather-btn thunder" onclick="selectWeatherById('thunder')">
+            <span class="weather-emoji">⚡</span>
+            <span class="weather-title">번개 치는 날</span>
+            <span class="weather-sub">화나요 / 짜증나고 답답해요</span>
+          </button>
+        </div>
 
         <!-- 3단계: 짧은 한 줄 이유 -->
         <div class="input-group">
@@ -116,16 +642,16 @@
             maxlength="100"
           >
           <div class="quick-chips-wrapper">
-            <button type="button" class="chip-btn">푹 자서 기분이 상쾌해요 🌿</button>
-            <button type="button" class="chip-btn">오늘 체육 시간이 기대돼요 ⚽</button>
-            <button type="button" class="chip-btn">아침에 조금 졸리고 피곤해요 🥱</button>
-            <button type="button" class="chip-btn">숙제를 두고 와서 걱정돼요 💧</button>
-            <button type="button" class="chip-btn">친구랑 재미있게 놀고 싶어요 🧸</button>
-            <button type="button" class="chip-btn">몸이 으슬으슬 감기 기운이 있어요 🧣</button>
+            <button type="button" class="chip-btn" onclick="fillNote('푹 자서 기분이 상쾌해요 🌿')">푹 자서 기분이 상쾌해요 🌿</button>
+            <button type="button" class="chip-btn" onclick="fillNote('오늘 체육 시간이 기대돼요 ⚽')">오늘 체육 시간이 기대돼요 ⚽</button>
+            <button type="button" class="chip-btn" onclick="fillNote('아침에 조금 졸리고 피곤해요 🥱')">아침에 조금 졸리고 피곤해요 🥱</button>
+            <button type="button" class="chip-btn" onclick="fillNote('숙제를 두고 와서 걱정돼요 💧')">숙제를 두고 와서 걱정돼요 💧</button>
+            <button type="button" class="chip-btn" onclick="fillNote('친구랑 재미있게 놀고 싶어요 🧸')">친구랑 재미있게 놀고 싶어요 🧸</button>
+            <button type="button" class="chip-btn" onclick="fillNote('몸이 으슬으슬 감기 기운이 있어요 🧣')">몸이 으슬으슬 감기 기운이 있어요 🧣</button>
           </div>
         </div>
 
-        <button type="button" id="submit-btn" class="btn-submit" disabled>
+        <button type="button" id="submit-btn" class="btn-submit" onclick="submitCheckin()" disabled>
           🌸 오늘의 마음 날씨 제출하기
         </button>
       </div>
@@ -133,12 +659,12 @@
 
     <!-- 2. 교사용 대시보드 탭 -->
     <section id="teacher-view" class="tab-pane">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
         <div>
-          <h2 style="font-size: 1.6rem; font-weight: 800; color: #1f2937;">우리 반 감정 현황 요약 대시보드 📊</h2>
-          <p style="font-size: 0.9rem; color: #6b7280; margin-top: 0.2rem;">오늘 꽃이름 친구들의 감정 분포와 실시간 제출 현황을 한눈에 파악합니다.</p>
+          <h2 style="font-size: 1.5rem; font-weight: 800; color: #1f2937;">우리 반 감정 현황 요약 대시보드 📊</h2>
+          <p style="font-size: 0.85rem; color: #6b7280;">오늘 꽃이름 친구들의 감정 분포와 실시간 제출 현황을 한눈에 파악합니다.</p>
         </div>
-        <button type="button" class="btn-secondary" id="refresh-btn">🔄 새로고침</button>
+        <button type="button" class="btn-secondary" onclick="updateDashboard(); showToast('대시보드를 새로고침했습니다.');">🔄 새로고침</button>
       </div>
 
       <!-- 요약 KPI 통계 카드 -->
@@ -165,32 +691,23 @@
         </div>
       </div>
 
-      <!-- 마인드 케어 알리미 (비/번개 선택 학생 특별 알림) -->
+      <!-- 마인드 케어 알리미 (비/번개 선택 학생) -->
       <div id="care-alert-box" class="care-alert-box">
-        <div class="care-content-flex">
-          <div class="care-img-thumbnail">
-            <img 
-              src="./assets/images/warm_sunshine_care_1792218704785.jpg" 
-              alt="위로의 햇살 일러스트" 
-              onerror="this.style.display='none'"
-            >
-          </div>
-          <div style="flex: 1;">
-            <div class="care-title">
-              <span>💌 오늘 아침 따뜻한 눈맞춤과 대화가 필요한 꽃친구</span>
-            </div>
-            <div class="care-desc">
-              비(🌧️)나 번개(⚡) 날씨를 골라 마음이 지치거나 화가 난 학생입니다. 아침 시간에 조용히 다가가 따뜻한 관심의 한마디를 건네주세요.
-            </div>
-            <div id="care-student-list" class="care-student-tags"></div>
-          </div>
+        <div class="care-title">
+          <span>💌 오늘 아침 따뜻한 눈맞춤과 대화가 필요한 꽃친구</span>
         </div>
+        <div class="care-desc">
+          비(🌧️)나 번개(⚡) 날씨를 골라 마음이 지치거나 화가 난 학생입니다. 아침 시간에 조용히 다가가 따뜻한 관심의 한마디를 건네주세요.
+        </div>
+        <div id="care-student-list" style="margin-top: 0.5rem; font-size: 0.85rem; color: #881337; font-weight: 700;"></div>
       </div>
 
       <!-- 감정 분포 차트 바 -->
       <div class="distribution-section">
-        <div style="font-weight: 800; font-size: 1rem; color: #1f2937;">오늘의 감정 날씨 분포</div>
-        <div id="distribution-bar" class="dist-bar-track"></div>
+        <div style="font-weight: 800; font-size: 0.95rem; color: #1f2937;">오늘의 감정 날씨 분포</div>
+        <div id="distribution-bar" class="dist-bar-track">
+          <div style="width: 100%; text-align: center; color: #9ca3af; font-size: 0.78rem; line-height: 28px;">아직 오늘의 체크인 기록이 없습니다.</div>
+        </div>
         <div class="dist-legend">
           <div class="legend-item"><span class="legend-dot" style="background:#fbbf24;"></span> ☀️ 해가 쨍쨍한 날</div>
           <div class="legend-item"><span class="legend-dot" style="background:#94a3b8;"></span> ⛅ 구름이 낀 날</div>
@@ -205,7 +722,7 @@
       <div class="records-table-container">
         <div class="records-table-header">
           <span style="font-weight: 800; color: #1f2937;">오늘의 실시간 감정 기록</span>
-          <span style="font-size: 0.8rem; color: #6b7280;">최신 제출순</span>
+          <span style="font-size: 0.78rem; color: #6b7280;">최신 제출순</span>
         </div>
         <table class="records-table">
           <thead>
@@ -218,7 +735,7 @@
             </tr>
           </thead>
           <tbody id="records-table-body">
-            <!-- 자바스크립트로 동적 렌더링 -->
+            <tr><td colspan="5" style="text-align: center; color: #9ca3af; padding: 2rem;">오늘 제출된 감정 기록이 없습니다.</td></tr>
           </tbody>
         </table>
       </div>
@@ -226,14 +743,13 @@
 
     <!-- 3. 시트 연동 설정 탭 -->
     <section id="settings-view" class="tab-pane">
-      <div style="margin-bottom: 1.5rem;">
-        <h2 style="font-size: 1.6rem; font-weight: 800; color: #1f2937;">구글 스프레드시트 연동 및 배포 안내</h2>
-        <p style="font-size: 0.9rem; color: #6b7280; margin-top: 0.2rem;">구글 스프레드시트의 Apps Script 웹앱 URL을 등록하면 실시간으로 감정이 시트에 영구 저장됩니다.</p>
+      <div style="margin-bottom: 1.25rem;">
+        <h2 style="font-size: 1.5rem; font-weight: 800; color: #1f2937;">구글 스프레드시트 연동 및 배포 안내</h2>
+        <p style="font-size: 0.85rem; color: #6b7280; margin-top: 0.2rem;">구글 스프레드시트의 Apps Script 웹앱 URL을 등록하면 실시간으로 감정이 시트에 영구 저장됩니다.</p>
       </div>
 
-      <!-- 웹앱 URL 입력 카드 -->
-      <div class="step-container" style="margin-bottom: 1.5rem;">
-        <label for="gas-url-input" class="input-label" style="font-size: 0.95rem; margin-bottom: 0.5rem;">
+      <div class="step-container" style="margin-bottom: 1.25rem;">
+        <label for="gas-url-input" class="input-label">
           🔗 구글 Apps Script 웹앱 URL (Exec URL)
         </label>
         <div style="display: flex; gap: 0.5rem;">
@@ -243,32 +759,25 @@
             class="text-input" 
             placeholder="https://script.google.com/macros/s/.../exec"
           >
-          <button type="button" id="save-gas-url-btn" class="btn-submit" style="width: auto; padding: 0.75rem 1.5rem; font-size: 0.9rem;">
+          <button type="button" class="btn-submit" onclick="saveGasUrlDirect()" style="width: auto; padding: 0.75rem 1.25rem; font-size: 0.85rem;">
             저장하기
           </button>
         </div>
-        <div style="font-size: 0.8rem; color: #0284c7; background: #f0f9ff; padding: 0.6rem 0.8rem; border-radius: 8px; margin-top: 0.75rem; border: 1px solid #bae6fd;">
+        <div style="font-size: 0.78rem; color: #0284c7; background: #f0f9ff; padding: 0.55rem 0.75rem; border-radius: 8px; margin-top: 0.7rem; border: 1px solid #bae6fd;">
           💡 <strong>CORS 에러 방지 처리 완료:</strong> GitHub Pages 환경에서도 브라우저 차단 없이 안전하게 구글 시트로 전송되도록 <code>Content-Type: text/plain;charset=utf-8</code> 규격이 적용되어 있습니다.
         </div>
       </div>
 
-      <!-- 쉬운 4단계 연동 가이드 -->
       <div class="step-container">
-        <div style="font-weight: 800; font-size: 1.05rem; margin-bottom: 1rem; color: #1f2937;">
+        <div style="font-weight: 800; font-size: 1rem; margin-bottom: 0.75rem; color: #1f2937;">
           📋 구글 스프레드시트 3분 완성 가이드
         </div>
-
-        <ol style="padding-left: 1.25rem; font-size: 0.9rem; line-height: 1.8; color: #374151;">
-          <li>새 구글 스프레드시트를 만들고 탭 이름을 <strong>'학생명단'</strong>과 <strong>'감정기록'</strong>으로 2개 만듭니다.
-            <div style="background: #fdfbf7; padding: 0.6rem 0.8rem; border-radius: 8px; margin: 0.35rem 0; font-family: monospace; font-size: 0.82rem; border: 1px solid #f3efe6;">
-              · <strong>'학생명단'</strong> 탭: 1행에 [번호, 이름] 입력 후 2행부터 꽃이름 목록 입력<br>
-              · <strong>'감정기록'</strong> 탭: 1행에 [일시, 번호, 이름, 감정이모지, 한줄마음] 입력
-            </div>
-          </li>
+        <ol style="padding-left: 1.25rem; font-size: 0.85rem; line-height: 1.8; color: #374151;">
+          <li>새 구글 스프레드시트를 만들고 탭 이름을 <strong>'학생명단'</strong>과 <strong>'감정기록'</strong>으로 2개 만듭니다.</li>
           <li>상단 메뉴에서 <strong>[확장 프로그램] > [Apps Script]</strong>를 클릭합니다.</li>
           <li>열린 편집기에 저장소의 <code>code.gs</code> 코드를 복사하여 붙여넣습니다.</li>
           <li>우측 상단 <strong>[배포] > [새 배포]</strong> 클릭 후:
-            <ul style="padding-left: 1.2rem; margin: 0.25rem 0;">
+            <ul style="padding-left: 1.2rem; margin: 0.2rem 0;">
               <li>유형: <strong>웹 앱</strong></li>
               <li>다음 사용자 권한으로 실행: <strong>나</strong></li>
               <li>액세스 권한이 있는 사용자: <strong>모든 사용자(Anyone)</strong> <span style="color: #e11d48; font-weight: bold;">(필수!)</span></li>
@@ -281,15 +790,432 @@
 
   </main>
 
-  <!-- 하단 토스트 알림창 -->
   <div id="toast-notice" class="toast-notice"></div>
 
-  <!-- 푸터 -->
   <footer class="app-footer">
     🌸 우리 반 꽃밭 마음 날씨 · 아침 감정 체크인 웹앱 (GitHub Pages Ready)
   </footer>
 
-  <!-- 독립 실행 자바스크립트 연결 -->
-  <script src="./script.js"></script>
+  <!-- 인라인 자바스크립트: 외부 script.js 파일 404 발생 시에도 100% 자가 구동 보장 -->
+  <script>
+    // 20명의 꽃이름 닉네임 기본 명단
+    const FLOWER_STUDENTS = [
+      { number: 1, name: '민들레', icon: '🌼' }, { number: 2, name: '해바라기', icon: '🌻' },
+      { number: 3, name: '튤립', icon: '🌷' }, { number: 4, name: '장미', icon: '🌹' },
+      { number: 5, name: '코스모스', icon: '🌸' }, { number: 6, name: '수국', icon: '🪻' },
+      { number: 7, name: '동백꽃', icon: '🌺' }, { number: 8, name: '수선화', icon: '🌼' },
+      { number: 9, name: '제비꽃', icon: '💜' }, { number: 10, name: '안개꽃', icon: '🤍' },
+      { number: 11, name: '은방울꽃', icon: '🔔' }, { number: 12, name: '라벤더', icon: '🪻' },
+      { number: 13, name: '무궁화', icon: '🌺' }, { number: 14, name: '백합', icon: '💐' },
+      { number: 15, name: '목련', icon: '🤍' }, { number: 16, name: '진달래', icon: '🌸' },
+      { number: 17, name: '개나리', icon: '🌼' }, { number: 18, name: '연꽃', icon: '🪷' },
+      { number: 19, name: '채송화', icon: '🏵️' }, { number: 20, name: '프리지아', icon: '💛' }
+    ];
+
+    const WEATHERS = [
+      { id: 'sunny', emoji: '☀️', title: '해가 쨍쨍한 날', sub: '아주 좋아요 / 활기차요', color: '#fbbf24', care: false },
+      { id: 'cloudy', emoji: '⛅', title: '구름이 낀 날', sub: '그저 그래요 / 보통이에요', color: '#94a3b8', care: false },
+      { id: 'rainy', emoji: '🌧️', title: '비가 오는 날', sub: '슬퍼요 / 울적하고 지쳐요', color: '#60a5fa', care: true },
+      { id: 'windy', emoji: '💨', title: '바람 부는 날', sub: '싱숭생숭 / 마음이 흔들려요', color: '#2dd4bf', care: false },
+      { id: 'snowy', emoji: '❄️', title: '눈 오는 날', sub: '설레요 / 포근하거나 차가워요', color: '#c084fc', care: false },
+      { id: 'thunder', emoji: '⚡', title: '번개 치는 날', sub: '화나요 / 짜증나고 답답해요', color: '#fb7185', care: true }
+    ];
+
+    let currentSelectedStudent = null;
+    let currentSelectedEmotion = null;
+    let recordsData = [];
+    let gasWebAppUrl = '';
+    let soundOn = true;
+
+    // 안전한 초기화
+    function initApp() {
+      try {
+        gasWebAppUrl = localStorage.getItem('class_gas_url') || '';
+        const savedUrlInput = document.getElementById('gas-url-input');
+        if (savedUrlInput) savedUrlInput.value = gasWebAppUrl;
+
+        const savedRec = localStorage.getItem('class_emotion_records');
+        if (savedRec) {
+          const parsed = JSON.parse(savedRec);
+          if (Array.isArray(parsed)) recordsData = parsed;
+        }
+      } catch (err) {
+        recordsData = [];
+      }
+
+      setupTabs();
+      setupNoteInput();
+      updateGridSubmittedStatus();
+      updateDashboard();
+    }
+
+    function setupTabs() {
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const tabId = btn.getAttribute('data-tab');
+          document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+          const target = document.getElementById(tabId);
+          if (target) target.classList.add('active');
+          if (tabId === 'teacher-view') updateDashboard();
+        });
+      });
+
+      const soundBtn = document.getElementById('sound-toggle-btn');
+      if (soundBtn) {
+        soundBtn.addEventListener('click', () => {
+          soundOn = !soundOn;
+          soundBtn.textContent = soundOn ? '🔔 소리 켜짐' : '🔕 소리 꺼짐';
+          showToast(soundOn ? '효과음이 켜졌습니다.' : '효과음이 꺼졌습니다.');
+        });
+      }
+
+      const csvBtn = document.getElementById('export-csv-btn');
+      if (csvBtn) csvBtn.addEventListener('click', exportCSV);
+
+      const sampleBtn = document.getElementById('fill-sample-btn');
+      if (sampleBtn) sampleBtn.addEventListener('click', fillSamples);
+    }
+
+    function setupNoteInput() {
+      const input = document.getElementById('emotion-note');
+      if (input) {
+        input.addEventListener('input', checkSubmitValidity);
+      }
+    }
+
+    function selectStudentByNum(num) {
+      const stu = FLOWER_STUDENTS.find(s => s.number === num);
+      if (!stu) return;
+
+      currentSelectedStudent = stu;
+      document.querySelectorAll('.student-card').forEach(c => {
+        if (Number(c.getAttribute('data-num')) === num) {
+          c.classList.add('selected');
+        } else {
+          c.classList.remove('selected');
+        }
+      });
+
+      const form = document.getElementById('checkin-form');
+      const numEl = document.getElementById('selected-student-num');
+      const nameEl = document.getElementById('selected-student-name');
+      if (form && numEl && nameEl) {
+        numEl.textContent = `${stu.number}번 ${stu.icon}`;
+        nameEl.textContent = stu.name;
+        form.classList.add('active');
+        form.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      checkSubmitValidity();
+    }
+
+    function cancelSelection() {
+      currentSelectedStudent = null;
+      document.querySelectorAll('.student-card').forEach(c => c.classList.remove('selected'));
+      const form = document.getElementById('checkin-form');
+      if (form) form.classList.remove('active');
+      checkSubmitValidity();
+    }
+
+    function selectWeatherById(id) {
+      const w = WEATHERS.find(item => item.id === id);
+      if (!w) return;
+
+      currentSelectedEmotion = w;
+      document.querySelectorAll('.weather-btn').forEach(btn => {
+        if (btn.classList.contains(id)) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+      checkSubmitValidity();
+    }
+
+    function fillNote(text) {
+      const input = document.getElementById('emotion-note');
+      if (input) {
+        input.value = text;
+        checkSubmitValidity();
+      }
+    }
+
+    function checkSubmitValidity() {
+      const btn = document.getElementById('submit-btn');
+      const noteInput = document.getElementById('emotion-note');
+      if (!btn) return;
+
+      const hasStudent = !!currentSelectedStudent;
+      const hasEmotion = !!currentSelectedEmotion;
+      const hasNote = noteInput && noteInput.value.trim().length > 0;
+
+      btn.disabled = !(hasStudent && hasEmotion && hasNote);
+    }
+
+    async function submitCheckin() {
+      if (!currentSelectedStudent || !currentSelectedEmotion) return;
+      const noteInput = document.getElementById('emotion-note');
+      const note = noteInput ? noteInput.value.trim() : '';
+      if (!note) return;
+
+      const btn = document.getElementById('submit-btn');
+      if (btn) btn.disabled = true;
+
+      const now = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+      const emotionText = `${currentSelectedEmotion.emoji} ${currentSelectedEmotion.title}`;
+
+      const payload = {
+        timestamp: timestamp,
+        number: currentSelectedStudent.number,
+        name: currentSelectedStudent.name,
+        emotion: emotionText,
+        note: note
+      };
+
+      const todayStr = getTodayStr();
+      recordsData = [payload, ...recordsData.filter(r => !(r.number === currentSelectedStudent.number && r.timestamp.startsWith(todayStr)))];
+      try {
+        localStorage.setItem('class_emotion_records', JSON.stringify(recordsData));
+      } catch(e) {}
+
+      // 구글 시트 웹앱 전송 (CORS 방지 Content-Type: text/plain;charset=utf-8)
+      if (gasWebAppUrl) {
+        try {
+          fetch(gasWebAppUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(payload)
+          }).catch(e => console.warn('시트 전송 알림:', e));
+        } catch(e) {}
+      }
+
+      if (soundOn) playWarmChime();
+      showToast(`🎉 '${currentSelectedStudent.name}' 친구의 마음 날씨가 기록되었어요!`);
+
+      if (noteInput) noteInput.value = '';
+      currentSelectedEmotion = null;
+      document.querySelectorAll('.weather-btn').forEach(b => b.classList.remove('active'));
+      cancelSelection();
+      updateGridSubmittedStatus();
+      updateDashboard();
+    }
+
+    function updateGridSubmittedStatus() {
+      const todayStr = getTodayStr();
+      const todayRecs = recordsData.filter(r => r.timestamp.startsWith(todayStr));
+      const submittedNumbers = new Set(todayRecs.map(r => r.number));
+
+      document.querySelectorAll('.student-card').forEach(card => {
+        const num = Number(card.getAttribute('data-num'));
+        if (submittedNumbers.has(num)) {
+          card.classList.add('submitted');
+        } else {
+          card.classList.remove('submitted');
+        }
+      });
+    }
+
+    function updateDashboard() {
+      const todayStr = getTodayStr();
+      const todayRecords = recordsData.filter(r => r.timestamp.startsWith(todayStr));
+      const totalStudents = FLOWER_STUDENTS.length;
+      const checkedCount = new Set(todayRecords.map(r => r.number)).size;
+      const missingCount = Math.max(0, totalStudents - checkedCount);
+      const rate = totalStudents > 0 ? Math.round((checkedCount / totalStudents) * 100) : 0;
+
+      const totalEl = document.getElementById('metric-total');
+      const checkedEl = document.getElementById('metric-checked');
+      const missingEl = document.getElementById('metric-missing');
+      const rateEl = document.getElementById('metric-rate');
+
+      if (totalEl) totalEl.textContent = `${totalStudents}송이`;
+      if (checkedEl) checkedEl.textContent = `${checkedCount}송이`;
+      if (missingEl) missingEl.textContent = `${missingCount}명`;
+      if (rateEl) rateEl.textContent = `${rate}%`;
+
+      const counts = {};
+      WEATHERS.forEach(w => counts[w.title] = 0);
+      let careStudents = [];
+
+      todayRecords.forEach(r => {
+        WEATHERS.forEach(w => {
+          if (r.emotion.includes(w.title) || r.emotion.includes(w.emoji)) {
+            counts[w.title] = (counts[w.title] || 0) + 1;
+            if (w.care) careStudents.push(r);
+          }
+        });
+      });
+
+      // 마인드 케어
+      const careBox = document.getElementById('care-alert-box');
+      const careList = document.getElementById('care-student-list');
+      if (careBox && careList) {
+        if (careStudents.length > 0) {
+          careBox.style.display = 'block';
+          careList.innerHTML = careStudents
+            .map(s => `${s.number}번 ${s.name} (${s.emotion.split(' ')[0]} "${s.note}")`)
+            .join(' · ');
+        } else {
+          careBox.style.display = 'none';
+        }
+      }
+
+      // 게이지 바
+      const distBar = document.getElementById('distribution-bar');
+      if (distBar) {
+        distBar.innerHTML = '';
+        if (todayRecords.length === 0) {
+          distBar.innerHTML = '<div style="width: 100%; text-align: center; color: #9ca3af; font-size: 0.78rem; line-height: 28px;">아직 오늘의 체크인 기록이 없습니다.</div>';
+        } else {
+          WEATHERS.forEach(w => {
+            const count = counts[w.title] || 0;
+            if (count > 0) {
+              const pct = Math.round((count / todayRecords.length) * 100);
+              const seg = document.createElement('div');
+              seg.className = 'dist-segment';
+              seg.style.width = `${pct}%`;
+              seg.style.backgroundColor = w.color;
+              seg.textContent = `${w.emoji} ${pct}%`;
+              distBar.appendChild(seg);
+            }
+          });
+        }
+      }
+
+      // 테이블
+      const tableBody = document.getElementById('records-table-body');
+      if (tableBody) {
+        tableBody.innerHTML = '';
+        if (todayRecords.length === 0) {
+          tableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #9ca3af; padding: 2rem;">오늘 제출된 감정 기록이 없습니다.</td></tr>';
+        } else {
+          todayRecords.forEach(r => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${r.timestamp.split(' ')[1] || r.timestamp}</td>
+              <td>${r.number}번</td>
+              <td><strong>${r.name}</strong></td>
+              <td>${r.emotion}</td>
+              <td>${r.note}</td>
+            `;
+            tableBody.appendChild(row);
+          });
+        }
+      }
+    }
+
+    function saveGasUrlDirect() {
+      const input = document.getElementById('gas-url-input');
+      if (!input) return;
+      gasWebAppUrl = input.value.trim();
+      localStorage.setItem('class_gas_url', gasWebAppUrl);
+      showToast('구글 Apps Script 웹앱 URL이 저장되었습니다.');
+      const banner = document.getElementById('connection-status-banner');
+      if (banner) {
+        if (gasWebAppUrl) {
+          banner.className = 'status-banner success';
+          banner.innerHTML = '<span>🟢 <strong>구글 스프레드시트 실시간 연동 중</strong> (제출 시 구글 시트에 즉시 기록됩니다)</span>';
+        } else {
+          banner.className = 'status-banner warning';
+          banner.innerHTML = '<span>🌸 현재 브라우저 임시 모드입니다. [시트 연동 설정] 탭에서 URL을 등록하세요.</span>';
+        }
+      }
+    }
+
+    function fillSamples() {
+      const todayStr = getTodayStr();
+      const sampleNotes = [
+        '햇살이 따뜻해서 기분이 좋아요! 🌼', '오늘 미술 시간에 종이접기가 기대돼요. 🎨',
+        '어젯밤에 늦게 자서 조금 졸려요. 💤', '숙제를 집에 두고 와서 마음이 쿵쾅거려요. 💧',
+        '친구와 쉬는 시간에 놀기로 해서 설레요! 🧸', '아침에 동생이랑 다퉈서 속상했어요. ⚡',
+        '오늘 급식에 맛있는 반찬이 나와서 기뻐요! 🍱', '날씨가 맑아서 체육 시간이 기다려져요. ☀️'
+      ];
+      const newRecs = [];
+      FLOWER_STUDENTS.slice(0, 15).forEach((s, idx) => {
+        const w = WEATHERS[idx % WEATHERS.length];
+        const timeStr = `${todayStr} 08:${String(20 + idx).padStart(2, '0')}:${String((idx * 3) % 60).padStart(2, '0')}`;
+        newRecs.push({
+          timestamp: timeStr,
+          number: s.number,
+          name: s.name,
+          emotion: `${w.emoji} ${w.title}`,
+          note: sampleNotes[idx % sampleNotes.length]
+        });
+      });
+      recordsData = [...newRecs, ...recordsData.filter(r => !r.timestamp.startsWith(todayStr))];
+      localStorage.setItem('class_emotion_records', JSON.stringify(recordsData));
+      updateGridSubmittedStatus();
+      updateDashboard();
+      showToast('꽃친구 15명의 예시 체크인 데이터가 입력되었습니다!');
+    }
+
+    function exportCSV() {
+      if (recordsData.length === 0) {
+        showToast('내보낼 기록이 없습니다.');
+        return;
+      }
+      const headers = ['일시', '번호', '꽃이름(닉네임)', '감정이모지', '한줄마음'];
+      const rows = recordsData.map(r => [
+        `"${r.timestamp}"`, r.number, `"${r.name}"`, `"${r.emotion}"`, `"${(r.note || '').replace(/"/g, '""')}"`
+      ]);
+      const csv = '\uFEFF' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `우리반_꽃밭_감정체크인_${getTodayStr()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('CSV 파일이 다운로드되었습니다.');
+    }
+
+    function playWarmChime() {
+      try {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) return;
+        const ctx = new AudioContextClass();
+        const freqs = [523.25, 659.25, 783.99, 1046.5];
+        freqs.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.08);
+          gain.gain.setValueAtTime(0, ctx.currentTime + idx * 0.08);
+          gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + idx * 0.08 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.08 + 0.45);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + idx * 0.08);
+          osc.stop(ctx.currentTime + idx * 0.08 + 0.5);
+        });
+      } catch(e) {}
+    }
+
+    function showToast(msg) {
+      let toast = document.getElementById('toast-notice');
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    function getTodayStr() {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    // 초기화 실행
+    document.addEventListener('DOMContentLoaded', initApp);
+    if (document.readyState === 'interactive' || document.readyState === 'complete') {
+      initApp();
+    }
+  </script>
 </body>
 </html>

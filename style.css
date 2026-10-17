@@ -288,40 +288,55 @@ body {
   padding-bottom: 0.75rem;
 }
 
+/* [요청 반영] 컴팩트한 크기의 꽃이름 카드 그리드 */
 .student-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+@media (max-width: 1024px) {
+  .student-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  .student-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.35rem;
+  }
 }
 
 .student-card {
   background-color: #fffdfa;
-  border: 1.5px solid #f5eee2;
-  border-radius: var(--radius-md);
-  padding: 0.85rem 0.4rem;
+  border: 1.5px solid #f4ece1;
+  border-radius: 10px;
+  padding: 0.35rem 0.2rem;
   text-align: center;
   cursor: pointer;
-  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.15s ease;
   user-select: none;
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-height: 56px;
 }
 
 .student-card:hover {
   transform: translateY(-2px);
   border-color: #f472b6;
-  background-color: #fff;
-  box-shadow: var(--shadow-sm);
+  background-color: #ffffff;
+  box-shadow: 0 2px 6px rgba(244, 114, 182, 0.18);
 }
 
 .student-card.selected {
   border-color: #ec4899;
   background-color: #fdf2f8;
-  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.25);
-  transform: scale(1.02);
+  box-shadow: 0 0 0 2.5px rgba(236, 72, 153, 0.3);
+  transform: scale(1.03);
 }
 
 .student-card.submitted {
@@ -332,40 +347,39 @@ body {
 .student-card.submitted::after {
   content: '✓';
   position: absolute;
-  top: 6px;
-  right: 8px;
-  font-size: 0.8rem;
+  top: 2px;
+  right: 4px;
+  font-size: 0.65rem;
   font-weight: 900;
   color: #10b981;
 }
 
 .student-num {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   font-weight: 700;
   color: #9ca3af;
-  margin-bottom: 0.2rem;
+  line-height: 1;
 }
 
 .student-icon {
-  font-size: 1.4rem;
+  font-size: 1.1rem;
   line-height: 1;
-  margin: 0.2rem 0;
+  margin: 0.15rem 0;
 }
 
 .student-name {
-  font-size: 0.9rem;
+  font-size: 0.75rem;
   font-weight: 800;
   color: #1f2937;
   white-space: nowrap;
+  letter-spacing: -0.02em;
 }
 
 .student-badge-today {
-  font-size: 0.75rem;
-  margin-top: 0.25rem;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 0.1rem 0.4rem;
-  border-radius: var(--radius-full);
-  border: 1px solid #e5e7eb;
+  font-size: 0.65rem;
+  margin-top: 0.1rem;
+  line-height: 1;
+  display: block;
 }
 
 /* 감정 입력 폼 영역 */
